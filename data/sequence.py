@@ -6,7 +6,7 @@ import torch
 import pdb
 
 from .preprocessing import get_preprocess_fn
-from .normalization import DatasetNormalizer
+from .normalization import DatasetNormalizer, EmptyNormalizer
 from .buffer import ReplayBuffer
 
 Batch = namedtuple('Batch', 'trajectories conditions')
@@ -37,7 +37,7 @@ class SequenceDataset(torch.utils.data.Dataset):
             fields.add_path(episode)
         fields.finalize()
 
-        self.normalizer = DatasetNormalizer(fields, normalizer, path_lengths=fields['path_lengths'])
+        self.normalizer = EmptyNormalizer() #DatasetNormalizer(fields, normalizer, path_lengths=fields['path_lengths'])
         self.indices = self.make_indices(fields.path_lengths, horizon)
 
         self.observation_dim = 3 * 15
@@ -73,8 +73,7 @@ class SequenceDataset(torch.utils.data.Dataset):
         return {"observations": np.reshape(x, (x.shape[0], -1))}
 
     def preprocess_image(self, frame):
-        # idxs to ignore:all but x and y (theyre funky)
-        return frame[:, (0, 1)]
+        return frame
 
     def normalize(self, keys=['observations']):
         '''

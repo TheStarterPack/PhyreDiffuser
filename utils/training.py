@@ -198,25 +198,25 @@ class Trainer(object):
             conditions = to_device(batch.conditions, 'cuda:0')
 
             ## repeat each item in conditions `n_samples` times
-            conditions = apply_dict(
-                einops.repeat,
-                conditions,
-                'b d -> (repeat b) d', repeat=n_samples,
-            )
+            # conditions = apply_dict(
+            #     einops.repeat,
+            #     conditions,
+            #     'b d -> (repeat b) d', repeat=n_samples,
+            # )
 
             ## [ n_samples x horizon x (action_dim + observation_dim) ]
-            samples = self.ema_model(conditions)
+            samples = self.ema_model(batch.trajectories, conditions)
             trajectories = to_np(samples.trajectories)
 
             ## [ n_samples x horizon x observation_dim ]
-            normed_observations = trajectories[:, :, self.dataset.action_dim:]
+            normed_observations = trajectories[:, :]
 
             # [ 1 x 1 x observation_dim ]
             normed_conditions = to_np(batch.conditions[0])[:,None]
 
             ## [ n_samples x (horizon + 1) x observation_dim ]
             normed_observations = np.concatenate([
-                np.repeat(normed_conditions, n_samples, axis=0),
+                normed_conditions,
                 normed_observations
             ], axis=1)
 

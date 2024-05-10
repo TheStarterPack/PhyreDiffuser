@@ -44,6 +44,27 @@ class DatasetNormalizer:
     def get_field_normalizers(self):
         return self.normalizers
 
+class EmptyNormalizer():
+
+    def __init__(self, ):
+        pass
+
+    def __repr__(self):
+        return "EmptyNormalizer"
+
+    def __call__(self, *args, **kwargs):
+        return self.normalize(*args, **kwargs)
+
+    def normalize(self, x, key):
+        return x
+
+    def unnormalize(self, x, key):
+        return x
+
+    def get_field_normalizers(self):
+        return []
+
+
 def flatten(dataset, path_lengths):
     '''
         flattens dataset of { key: [ n_episodes x max_path_lenth x dim ] }

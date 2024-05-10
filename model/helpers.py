@@ -139,9 +139,9 @@ def cosine_beta_schedule(timesteps, s=0.008, dtype=torch.float32):
     betas_clipped = np.clip(betas, a_min=0, a_max=0.999)
     return torch.tensor(betas_clipped, dtype=dtype)
 
-def apply_conditioning(x, conditions, action_dim):
+def apply_conditioning(x, conditions):
     for t, val in conditions.items():
-        x[:, t, action_dim:] = val.clone()
+        x[:, t] = val.clone()
     return x
 
 
@@ -151,10 +151,9 @@ def apply_conditioning(x, conditions, action_dim):
 
 class WeightedLoss(nn.Module):
 
-    def __init__(self, weights, action_dim):
+    def __init__(self, weights):
         super().__init__()
         self.register_buffer('weights', weights)
-        self.action_dim = action_dim
 
     def forward(self, pred, targ):
         '''
@@ -163,8 +162,7 @@ class WeightedLoss(nn.Module):
         '''
         loss = self._loss(pred, targ)
         weighted_loss = (loss * self.weights).mean()
-        a0_loss = (loss[:, 0, :self.action_dim] / self.weights[0, :self.action_dim]).mean()
-        return weighted_loss, {'a0_loss': a0_loss}
+        return weighted_loss, {}
 
 class ValueLoss(nn.Module):
     def __init__(self, *args):
