@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 from data.PhyreDataset import PhyreDataset
+from visualization.rendering import SimplePhyreRenderer, PhyreTrajectoryRenderer
 
 colors = [(0, 0, 256), (0, 256, 0), (256, 0, 0)]
 
@@ -46,3 +47,5 @@ if __name__ == '__main__':
         print(len(run))
     first_run = dset[0]
     run = run_to_video(first_run)
+    renderer = PhyreTrajectoryRenderer()
+    renderer.composite("../data/run.png", first_run[np.newaxis, ...])

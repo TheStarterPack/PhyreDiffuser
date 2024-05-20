@@ -205,23 +205,25 @@ class Trainer(object):
             # )
 
             ## [ n_samples x horizon x (action_dim + observation_dim) ]
-            samples = self.ema_model(batch.trajectories, conditions)
-            trajectories = to_np(samples.trajectories)
+            trajectories, chain = self.ema_model(batch.trajectories, conditions, return_chain=True)
 
+            trajectories = chain[:, ::int(chain.shape[1]/5)]
+            trajectories = to_np(trajectories)
             ## [ n_samples x horizon x observation_dim ]
             normed_observations = trajectories[:, :]
 
             # [ 1 x 1 x observation_dim ]
             normed_conditions = to_np(batch.conditions[0])[:,None]
-
+            normed_conditions = np.repeat(normed_conditions, normed_observations.shape[1], axis=0)
+            normed_conditions = normed_conditions[np.newaxis, ...]
             ## [ n_samples x (horizon + 1) x observation_dim ]
             normed_observations = np.concatenate([
                 normed_conditions,
                 normed_observations
-            ], axis=1)
+            ], axis=2)
 
             ## [ n_samples x (horizon + 1) x observation_dim ]
             observations = self.dataset.normalizer.unnormalize(normed_observations, 'observations')
 
             savepath = os.path.join(self.logdir, f'sample-{self.step}-{i}.png')
-            self.renderer.composite(savepath, observations)
+            self.renderer.composite(savepath, observations[0])

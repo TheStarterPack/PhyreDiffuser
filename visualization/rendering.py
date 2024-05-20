@@ -35,11 +35,13 @@ class PhyreTrajectoryRenderer:
 
     def composite(self, savepath, observations):
         images = []
-        for observation in observations:
+        for idx, observation in enumerate(observations):
             reshaped_observations = np.reshape(observation, (-1, 3, 15))
             image = paint_trajectory(reshaped_observations, create_image=False, return_frames=False,
                                      return_cum_image=True)
             images.append(image)
-            images.append(np.zeros((256, 10, 4), dtype=np.uint8))
+            if idx != len(observations)-1:
+                padding = np.zeros((256, 10, 4), dtype=np.uint8)
+                images.append(padding)
         final_image = np.concatenate(images, axis=1)
         plt.imsave(f"{savepath}", final_image)

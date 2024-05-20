@@ -52,7 +52,7 @@ def paint_trajectory(x, create_image=True, return_frames=False, return_cum_image
             # Image composition by alpha blending
             rgba_img = np.dstack([img, np.where(img[:,:,0] + img[:,:,1] + img[:,:,2] == 3, 1e-10, 0.1)])
             if cum_img is None:
-                cum_img = rgba_img
+                cum_img = np.ones(rgba_img.shape)
             cum_img_RGB = cum_img[...,:3]
             rgba_img_RGB = rgba_img[...,:3]
             cum_img_A = cum_img[...,3]
