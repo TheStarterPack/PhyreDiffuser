@@ -28,4 +28,4 @@ trainer = Trainer(diffusion, dataset, PhyreTrajectoryRenderer(), sample_freq=100
                   save_freq=10000, device=device)
 
 for i in tqdm(range(epochs)):
-    trainer.train(10)
+    trainer.train(100)
