@@ -9,15 +9,18 @@ from .arrays import batch_to_device, to_np, to_device, apply_dict
 from .timer import Timer
 from .cloud import sync_logs
 
+
 def cycle(dl):
     while True:
         for data in dl:
             yield data
 
+
 class EMA():
     '''
         empirical moving average
     '''
+
     def __init__(self, beta):
         super().__init__()
         self.beta = beta
@@ -32,26 +35,28 @@ class EMA():
             return new
         return old * self.beta + (1 - self.beta) * new
 
+
 class Trainer(object):
     def __init__(
-        self,
-        diffusion_model,
-        dataset,
-        renderer,
-        ema_decay=0.995,
-        train_batch_size=32,
-        train_lr=2e-5,
-        gradient_accumulate_every=2,
-        step_start_ema=2000,
-        update_ema_every=10,
-        log_freq=100,
-        sample_freq=1000,
-        save_freq=1000,
-        label_freq=100000,
-        save_parallel=False,
-        results_folder='./results',
-        n_reference=8,
-        bucket=None,
+            self,
+            diffusion_model,
+            dataset,
+            renderer,
+            ema_decay=0.995,
+            train_batch_size=32,
+            train_lr=2e-5,
+            gradient_accumulate_every=2,
+            step_start_ema=2000,
+            update_ema_every=10,
+            log_freq=100,
+            sample_freq=1000,
+            save_freq=1000,
+            label_freq=100000,
+            save_parallel=False,
+            results_folder='./results',
+            n_reference=8,
+            bucket=None,
+            device='cpu',
     ):
         super().__init__()
         self.model = diffusion_model
@@ -86,6 +91,8 @@ class Trainer(object):
         self.reset_parameters()
         self.step = 0
 
+        self.device = device
+
     def reset_parameters(self):
         self.ema_model.load_state_dict(self.model.state_dict())
 
@@ -95,9 +102,9 @@ class Trainer(object):
             return
         self.ema.update_model_average(self.ema_model, self.model)
 
-    #-----------------------------------------------------------------------------#
-    #------------------------------------ api ------------------------------------#
-    #-----------------------------------------------------------------------------#
+    # -----------------------------------------------------------------------------#
+    # ------------------------------------ api ------------------------------------#
+    # -----------------------------------------------------------------------------#
 
     def train(self, n_train_steps):
 
@@ -105,7 +112,7 @@ class Trainer(object):
         for step in range(n_train_steps):
             for i in range(self.gradient_accumulate_every):
                 batch = next(self.dataloader)
-                #batch = batch_to_device(batch)
+                batch = batch_to_device(batch, self.device)
 
                 loss, infos = self.model.loss(*batch)
                 loss = loss / self.gradient_accumulate_every
@@ -154,15 +161,15 @@ class Trainer(object):
             loads model and ema from disk
         '''
         loadpath = os.path.join(self.logdir, f'state_{epoch}.pt')
-        data = torch.load(loadpath)
+        data = torch.load(loadpath, map_location=torch.device('cpu'))
 
         self.step = data['step']
         self.model.load_state_dict(data['model'])
         self.ema_model.load_state_dict(data['ema'])
 
-    #-----------------------------------------------------------------------------#
-    #--------------------------------- rendering ---------------------------------#
-    #-----------------------------------------------------------------------------#
+    # -----------------------------------------------------------------------------#
+    # --------------------------------- rendering ---------------------------------#
+    # -----------------------------------------------------------------------------#
 
     def render_reference(self, batch_size=10):
         '''
@@ -178,7 +185,7 @@ class Trainer(object):
 
         ## get trajectories and condition at t=0 from batch
         trajectories = to_np(batch.trajectories)
-        conditions = to_np(batch.conditions[0])[:,None]
+        conditions = to_np(batch.conditions[0])[:, None]
 
         ## [ batch_size x horizon x observation_dim ]
         normed_observations = trajectories[:, :, self.dataset.action_dim:]
@@ -192,10 +199,10 @@ class Trainer(object):
             renders samples from (ema) diffusion model
         '''
         for i in range(batch_size):
-
             ## get a single datapoint
             batch = self.dataloader_vis.__next__()
-            conditions = to_device(batch.conditions, 'cuda:0')
+            batch = batch_to_device(batch, self.device)
+            conditions = to_device(batch.conditions, self.device)
 
             ## repeat each item in conditions `n_samples` times
             # conditions = apply_dict(
@@ -207,13 +214,13 @@ class Trainer(object):
             ## [ n_samples x horizon x (action_dim + observation_dim) ]
             trajectories, chain = self.ema_model(batch.trajectories, conditions, return_chain=True)
 
-            trajectories = chain[:, ::int(chain.shape[1]/5)]
+            trajectories = chain[:, ::int(chain.shape[1] / 5)]
             trajectories = to_np(trajectories)
             ## [ n_samples x horizon x observation_dim ]
             normed_observations = trajectories[:, :]
 
             # [ 1 x 1 x observation_dim ]
-            normed_conditions = to_np(batch.conditions[0])[:,None]
+            normed_conditions = to_np(batch.conditions[0])[:, None]
             normed_conditions = np.repeat(normed_conditions, normed_observations.shape[1], axis=0)
             normed_conditions = normed_conditions[np.newaxis, ...]
             ## [ n_samples x (horizon + 1) x observation_dim ]
