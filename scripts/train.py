@@ -1,4 +1,6 @@
 import torch
+import sys
+sys.path.append('../')
 
 from data.sequence import SequenceDataset
 from model.diffusion import GaussianDiffusion
@@ -6,6 +8,7 @@ from model.temporal import TemporalUnet
 from utils import Trainer
 from visualization.rendering import SimplePhyreRenderer, PhyreTrajectoryRenderer
 from tqdm import tqdm
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # device = "cpu"
