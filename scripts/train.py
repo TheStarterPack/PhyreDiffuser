@@ -16,12 +16,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 observation_dim_per_object = 15
 num_objects = 3
 
+train_dataset = "../datasets/phyre_diff_00_1_tasks_1_action_latents.h5"
+
 observation_dim = observation_dim_per_object * num_objects
 horizon = 64
 
 epochs = 1000
 
-dataset = SequenceDataset("../datasets/phyre_diff_00_1_tasks_1_action_latents.h5")
+dataset = SequenceDataset(train_dataset)
 
 model = TemporalUnet(horizon=horizon, transition_dim=observation_dim, cond_dim=observation_dim)
 

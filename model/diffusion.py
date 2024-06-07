@@ -241,14 +241,16 @@ class GaussianDiffusion(nn.Module):
 
         x = init_trajectories.clone()
         x[:, :, self.diffusion_dims] = torch.randn_like(x[:, :, self.diffusion_dims], device=device)
-        x = apply_conditioning(x, cond)
+        if cond:
+            x = apply_conditioning(x, cond)
 
         chain = [x.clone()] if return_chain else None
 
         progress = utils.Progress(self.n_timesteps) if verbose else utils.Silent()
         for i in reversed(range(0, self.n_timesteps)):
             t = make_timesteps(batch_size, i, device)
-            x = apply_conditioning(x, cond)
+            if cond:
+                x = apply_conditioning(x, cond)
             x[:, :, self.diffusion_dims] = self.sample_fn(x, cond, t, **sample_kwargs)[:, :, self.diffusion_dims]
             progress.update({'t': i})
             if return_chain: chain.append(x.clone())

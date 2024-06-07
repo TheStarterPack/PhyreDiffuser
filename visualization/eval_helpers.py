@@ -9,6 +9,9 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Rectangle
 import matplotlib.patheffects as pe
 
+from IPython.display import display
+from ipywidgets import interact, widgets
+
 def get_color(one_hot_array):
     idx = np.argmax(one_hot_array)
     colors = {0: "red", 1: "lightgreen", 2: "blue", 3: "purple", 4: "grey", 5: "black"}
@@ -71,7 +74,21 @@ def paint_trajectory(x, create_image=True, return_frames=False, return_cum_image
     elif return_cum_image:
         return cum_img
 
-   
+def slider_animation(frames):
+    # requires frames returned by paint_trajectory()
+    fig, ax = plt.subplots()
+    im = ax.imshow(frames[0])
+    plt.close()
+    hfig = display(fig, display_id=True)
+
+    def update(t):
+        im.set_data(frames[t])
+        fig.canvas.draw_idle()
+        hfig.update(fig)
+
+    interact(update, t=widgets.IntSlider(value=0, min=0, max=len(frames)-1))
+
+
 def permute_objs(trajectory):
     out = trajectory.clone()
     for trajectory in range(len(out)):

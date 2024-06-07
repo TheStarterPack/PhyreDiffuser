@@ -156,11 +156,11 @@ class Trainer(object):
         if self.bucket is not None:
             sync_logs(self.logdir, bucket=self.bucket, background=self.save_parallel)
 
-    def load(self, epoch):
+    def load(self, loadpath):
         '''
             loads model and ema from disk
         '''
-        loadpath = os.path.join(self.logdir, f'state_{epoch}.pt')
+        # loadpath = os.path.join(self.logdir, f'{model_name}.pt')
         data = torch.load(loadpath, map_location=torch.device('cpu'))
 
         self.step = data['step']
